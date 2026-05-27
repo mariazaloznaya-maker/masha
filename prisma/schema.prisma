@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("student")
+  phone        String?
+  social       String?
+  class        String?
+  goal         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  taughtLessons   Lesson[]       @relation("TeacherLessons")
+  scheduleSlots   ScheduleSlot[] @relation("TeacherSchedule")
+  lessons         Lesson[]       @relation("StudentLessons")
+  subscriptions   Subscription[]
+  studentSchedule ScheduleSlot[] @relation("StudentSchedule")
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  studentId String
+  teacherId String
+  datetime  DateTime
+  status    String   @default("scheduled")
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student User @relation("StudentLessons", fields: [studentId], references: [id])
+  teacher User @relation("TeacherLessons", fields: [teacherId], references: [id])
+}
+
+model ScheduleSlot {
+  id        String   @id @default(cuid())
+  teacherId String
+  studentId String?
+  datetime  DateTime
+  status    String   @default("free")
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher User  @relation("TeacherSchedule", fields: [teacherId], references: [id])
+  student User? @relation("StudentSchedule", fields: [studentId], references: [id])
+}
+
+model Subscription {
+  id             String   @id @default(cuid())
+  studentId      String
+  name           String
+  lessonsCount   Int
+  pricePerLesson Float
+  discount       Float    @default(0)
+  totalPrice     Float
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  student User @relation(fields: [studentId], references: [id])
+}
+
+model Broadcast {
+  id        String    @id @default(cuid())
+  title     String
+  content   String
+  target    String    @default("all")
+  sentAt    DateTime?
+  createdAt DateTime  @default(now())
+}
